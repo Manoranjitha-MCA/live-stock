@@ -54,7 +54,7 @@ const Navbar = ({ setCurrentPage }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {['Home', 'Products', 'Login'].map((item, index) => (
+          {['Home', 'Products','Gallery','Contact Us', 'Login'].map((item, index) => (
             <motion.a 
               key={index}
               href="#"
