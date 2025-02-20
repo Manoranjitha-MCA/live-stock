@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import murrel_fish from "../assets/images/murrel fish.jpg";
 import pomfret_fish from "../assets/images/pomfret-fish.jpg";
-import cattle_form from "../assets/images/cattle image.jpg";
+import cattle_form from "../assets/images/cattle Image.jpg";
 const HomeComponent = () => {
   return (
     <motion.div 
