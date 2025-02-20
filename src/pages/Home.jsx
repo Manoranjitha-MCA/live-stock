@@ -3,11 +3,15 @@ import Navbar from '../components/Navbar';
 import Products from '../components/Products';
 import HomeComponent from '../components/HomeComponent';
 import AuthPage from '../components/AuthPage';
+import { Gallery } from '../components/Gallery';
+import { Contact } from '../components/Contact';
 
 const Home = () => {
     const components = [
         <HomeComponent/>,
         <Products/>,
+        <Gallery/>,
+        <Contact/>,
         <AuthPage/>
     ]
     const [currentPage, setCurrentPage] = useState(0);

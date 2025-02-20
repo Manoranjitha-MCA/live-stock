@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-
+import murrel_fish from "../assets/images/murrel fish.jpg";
+import pomfret_fish from "../assets/images/pomfret-fish.jpg";
+import cattle_form from "../assets/images/cattle image.jpg";
 const HomeComponent = () => {
   return (
     <motion.div 
@@ -55,7 +57,7 @@ const HomeComponent = () => {
       >
         <div className="overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
           <img 
-            src="/cattle-farm.jpg" 
+            src={cattle_form} 
             alt="Cattle Farm" 
             className="object-cover w-full h-48 hover:scale-105 transition-transform duration-300" 
           />
@@ -63,7 +65,7 @@ const HomeComponent = () => {
 
         <div className="overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
           <img 
-            src="/murrel-fish.jpg" 
+            src={murrel_fish}
             alt="Murrel Fish" 
             className="object-cover w-full h-48 hover:scale-105 transition-transform duration-300" 
           />
@@ -71,7 +73,7 @@ const HomeComponent = () => {
 
         <div className="overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
           <img 
-            src="/pomfret-fish.jpg" 
+            src={pomfret_fish}
             alt="Pomfret Fish" 
             className="object-cover w-full h-48 hover:scale-105 transition-transform duration-300" 
           />

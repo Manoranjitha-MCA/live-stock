@@ -1,36 +1,41 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import white_yorkshire from "../assets/images/white-yorkshire.jpg"; 
+import duroc from "../assets/images/duroc.jpg";
+import landrace from "../assets/images/landrace.jpg";
+import murrel_fish from "../assets/images/murrel fish.jpg";
+import pomfret_fish from "../assets/images/pomfret-fish.jpg";
 
 const products = [
   {
     id: 1,
     name: 'White Yorkshire',
     description: 'Rich source of high-quality protein, essential for muscle growth and repair.',
-    image: '/white-yorkshire.jpg',
+    image: white_yorkshire
   },
   {
     id: 2,
     name: 'Duroc',
     description: 'Contains vital B vitamins such as B1, B6, and B12, supporting metabolism and nerve function.',
-    image: '/duroc.jpg',
+    image: duroc
   },
   {
     id: 3,
     name: 'Landrace',
     description: 'High-end breed known for red blood cell production and muscle health.',
-    image: '/landrace.jpg',
+    image: landrace
   },
   {
     id: 4,
     name: 'Murrel Fish',
     description: 'Packed with omega-3 and omega-6 fatty acids, supporting heart and brain health.',
-    image: '/murrel-fish.jpg',
+    image: murrel_fish
   },
   {
     id: 5,
     name: 'Pomfret Fish',
     description: 'Offers exceptional health benefits with essential amino acids for tissue repair.',
-    image: '/pomfret-fish.jpg',
+    image: pomfret_fish
   },
 ];
 
