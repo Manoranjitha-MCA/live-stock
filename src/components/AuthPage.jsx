@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { ref, set, get, child } from "firebase/database";
 import { db } from "../firebase";
 import { toast, ToastContainer } from "react-toastify";
-
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState("");
@@ -15,7 +14,7 @@ export default function AuthPage() {
     setLoading(true);
 
     if (!phone || !password || (!isLogin && !name)) {
-      toast.info("Please fill all the fields");
+      toast.info("Please fill all the details!");
       setLoading(false);
       return;
     }
