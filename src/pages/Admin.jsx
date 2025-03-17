@@ -190,11 +190,21 @@ function AdminPage() {
             <>
               <h2>Manage Products</h2>
               <Form form={form} onFinish={addProduct} layout="inline">
-                <Form.Item name="name" rules={[{ required: true, message: "Enter name" }]}> <Input placeholder="Name" /> </Form.Item>
-                <Form.Item name="breed" rules={[{ required: true, message: "Enter breed" }]}> <Input placeholder="Breed" /> </Form.Item>
-                <Form.Item name="amount" rules={[{ required: true, message: "Enter amount" }]}> <Input placeholder="Amount" type="number" /> </Form.Item>
-                <Form.Item name="imageUrl" rules={[{ required: true, message: "Enter image URL" }]}> <Input placeholder="Image URL" /> </Form.Item>
-                <Form.Item> <Button type="primary" htmlType="submit">Add Product</Button> </Form.Item>
+                <Form.Item name="name" rules={[{ required: true, message: "Enter name" }]}>
+                  <Input placeholder="Name" />
+                </Form.Item>
+                <Form.Item name="breed" rules={[{ required: true, message: "Enter breed" }]}>
+                  <Input placeholder="Breed" />
+                </Form.Item>
+                <Form.Item name="amount" rules={[{ required: true, message: "Enter amount" }]}>
+                  <Input placeholder="Amount" type="number" />
+                </Form.Item>
+                <Form.Item name="imageUrl" rules={[{ required: true, message: "Enter image URL" }]}>
+                  <Input placeholder="Image URL" />
+                </Form.Item>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit">Add Product</Button>
+                </Form.Item>
               </Form>
               <Form form={form} component={false}>
                     <Table dataSource={products} columns={productColumns} rowKey="id" />
@@ -205,8 +215,12 @@ function AdminPage() {
             <>
               <h2>Manage Gallery</h2>
               <Form form={form} onFinish={addGalleryImage} layout="inline">
-                <Form.Item name="url" rules={[{ required: true, message: "Enter Image URL" }]}> <Input placeholder="Image URL" /> </Form.Item>
-                <Form.Item> <Button type="primary" htmlType="submit">Add Image</Button> </Form.Item>
+                <Form.Item name="url" rules={[{ required: true, message: "Enter Image URL" }]}>
+                  <Input placeholder="Image URL" />
+                </Form.Item>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit">Add Image</Button>
+                </Form.Item>
               </Form>
               <Table dataSource={gallery} columns={[ { title: "Image URL", dataIndex: "url", key: "url" }, { title: "Actions", key: "actions", render: (_, record) => ( <Popconfirm title="Are you sure?" onConfirm={() => deleteGalleryImage(record.id)}> <Button type="link" danger>Delete</Button> </Popconfirm> ) } ]} rowKey="id" />
             </>
