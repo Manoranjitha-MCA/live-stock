@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ref, set, get, child } from "firebase/database";
 import { db } from "../firebase";
 import { toast, ToastContainer } from "react-toastify";
@@ -8,6 +9,7 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const addUser = async (e) => {
     e.preventDefault();
@@ -28,6 +30,7 @@ export default function AuthPage() {
           const userData = snapshot.val();
           if (userData.password === password) {
             toast.success("Login successful!");
+            userData.phone === "9884642773" ? navigate("/admin") : navigate("/user");
           } else {
             toast.error("Invalid phone number or password!");
           }
