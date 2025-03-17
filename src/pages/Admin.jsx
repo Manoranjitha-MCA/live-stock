@@ -11,7 +11,9 @@ function AdminPage() {
   const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
   const [gallery, setGallery] = useState([]);
-  const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
+  const [productForm] = Form.useForm();
+  const [galleryForm] = Form.useForm();
   const [editingKey, setEditingKey] = useState(null);
   const [selectedMenu, setSelectedMenu] = useState("1");
   const [enquiries, setEnquiries] = useState([]);
@@ -44,7 +46,7 @@ function AdminPage() {
 
   const addProduct = (values) => {
     push(ref(db, "products"), values);
-    form.resetFields();
+    productForm.resetFields();
   };
   const deleteEnquiry = (id) => remove(ref(db, `enquiries/${id}`));
   const deleteProduct = (id) => remove(ref(db, `products/${id}`));
@@ -53,17 +55,17 @@ function AdminPage() {
 
   const addGalleryImage = (values) => {
     push(ref(db, "gallery"), values.url);
-    form.resetFields();
+    galleryForm.resetFields();
   };
 
   const editProduct = (record) => {
-    form.setFieldsValue(record); // Pre-fill form with row data
+    editForm.setFieldsValue(record); // Pre-fill form with row data
     setEditingKey(record.id);
   };
   
   const saveProduct = async (id) => {
     try {
-      const values = await form.validateFields(); // Validate fields before saving
+      const values = await editForm.validateFields(); // Validate fields before saving
       await update(ref(db, `products/${id}`), values); // Update Firestore
       setEditingKey(null); // Exit edit mode
     } catch (error) {
@@ -189,7 +191,7 @@ function AdminPage() {
           {selectedMenu === "1" && (
             <>
               <h2>Manage Products</h2>
-              <Form form={form} onFinish={addProduct} layout="inline">
+              <Form form={productForm} onFinish={addProduct} layout="inline">
                 <Form.Item name="name" rules={[{ required: true, message: "Enter name" }]}>
                   <Input placeholder="Name" />
                 </Form.Item>
@@ -206,7 +208,7 @@ function AdminPage() {
                   <Button type="primary" htmlType="submit">Add Product</Button>
                 </Form.Item>
               </Form>
-              <Form form={form} component={false}>
+              <Form form={editForm} component={false}>
                     <Table dataSource={products} columns={productColumns} rowKey="id" />
                 </Form>
             </>
@@ -214,7 +216,7 @@ function AdminPage() {
           {selectedMenu === "2" && (
             <>
               <h2>Manage Gallery</h2>
-              <Form form={form} onFinish={addGalleryImage} layout="inline">
+              <Form form={galleryForm} onFinish={addGalleryImage} layout="inline">
                 <Form.Item name="url" rules={[{ required: true, message: "Enter Image URL" }]}>
                   <Input placeholder="Image URL" />
                 </Form.Item>
