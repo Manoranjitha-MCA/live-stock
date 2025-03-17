@@ -163,7 +163,7 @@ function AdminPage() {
 
   const userColumns = [
     { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Contact", dataIndex: "phone", key: "phone" },
     {
       title: "Actions",
       key: "actions",
