@@ -1,22 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import logo from "../assets/images/logo.jpeg";
-import white_yorkshire from "../assets/images/white-yorkshire.jpg"; 
-import duroc from "../assets/images/duroc.jpg";
-import landrace from "../assets/images/landrace.jpg";
-import murrel_fish from "../assets/images/murrel fish.jpg";
-import pomfret_fish from "../assets/images/pomfret-fish.jpg";
+import { ref, onValue } from "firebase/database";
+import { db } from "../firebase";
 
 // Gallery Component
 export function Gallery() {
-  const images = [
-    logo,
-    white_yorkshire,
-    duroc,
-    landrace,
-    murrel_fish,
-    pomfret_fish
-  ];
+  const [images, setImages] = useState([]);
+
+  useEffect(() => {
+    const galleryRef = ref(db, "gallery");
+
+    onValue(galleryRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const urls = Object.values(data); // Extract URLs from the object
+        setImages(urls);
+      }
+    });
+  }, []);
 
   return (
     <div className="p-8 bg-white min-h-screen flex flex-col items-center justify-center">
