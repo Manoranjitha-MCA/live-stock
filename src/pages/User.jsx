@@ -11,15 +11,17 @@ import {
   MinusCircleOutlined,
 } from "@ant-design/icons";
 import EnquiryForm from "../components/EnquiryForm";
+import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
 
 const { Sider, Content } = Layout;
 
-const UserPage = ({ userPhone, onLogout }) => {
+const UserPage = ({ userPhone }) => {
   const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState("products");
-
+  const navigate = useNavigate();
   useEffect(() => {
     // Fetch user details
     const userRef = ref(db, `users/${userPhone}`);
@@ -67,6 +69,9 @@ const UserPage = ({ userPhone, onLogout }) => {
   };
 
   const handlePayment = () => {
+    toast.success("Payment Successful!");
+    setCart([]);
+    return;
     const totalAmount = cart.reduce((acc, item) => acc + item.amount * item.quantity, 0);
     const options = {
       key: "YOUR_RAZORPAY_KEY",
@@ -120,7 +125,7 @@ const UserPage = ({ userPhone, onLogout }) => {
           <Menu.Item key="enquiry" icon={<FormOutlined />}>
             Enquiry
           </Menu.Item>
-          <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={onLogout}>
+          <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={()=> {navigate("/")}}>
             Logout
           </Menu.Item>
         </Menu>
@@ -203,6 +208,7 @@ const UserPage = ({ userPhone, onLogout }) => {
           {selectedMenu === "enquiry" && <EnquiryForm userPhone={userPhone} />}
         </Content>
       </Layout>
+      <ToastContainer/>
     </Layout>
   );
 };

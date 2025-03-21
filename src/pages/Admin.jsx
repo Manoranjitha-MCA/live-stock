@@ -1,9 +1,10 @@
 // AdminPage.js
-import { Layout, Menu, Form, Input, Button, Table, Popconfirm } from "antd";
-import { AppstoreOutlined, PhoneOutlined, PictureOutlined, UserOutlined } from "@ant-design/icons";
+import { Layout, Menu, Form, Input, Button, Table, Popconfirm, InputNumber } from "antd";
+import { AppstoreOutlined, LoginOutlined, PhoneOutlined, PictureOutlined, UserOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { ref, push, onValue, remove, update } from "firebase/database";
+import { useNavigate } from "react-router-dom";
 
 const { Header, Content, Sider } = Layout;
 
@@ -17,6 +18,7 @@ function AdminPage() {
   const [editingKey, setEditingKey] = useState(null);
   const [selectedMenu, setSelectedMenu] = useState("1");
   const [enquiries, setEnquiries] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const productsRef = ref(db, "products");
@@ -74,17 +76,19 @@ function AdminPage() {
   };
   const enquiryColumns = [
     { title: "Name", dataIndex: "name", key: "name" },
+    { title: "Location", dataIndex: "location", key: "location" },
     { 
-      title: "Mobile", 
-      dataIndex: "mobile", 
-      key: "mobile",
-      render: (mobile) => (
-        <Button type="link" icon={<PhoneOutlined />} onClick={() => window.open(`tel:${mobile}`)}>
-          {mobile}
+      title: "Phone No", 
+      dataIndex: "phone", 
+      key: "phone",
+      render: (phone) => (
+        <Button type="link" icon={<PhoneOutlined />} onClick={() => window.open(`tel:${phone}`)}>
+          {phone}
         </Button>
       ),
     },
-    { title: "Message", dataIndex: "message", key: "message" },
+    { title: "Looking For", dataIndex: "lookingFor", key: "lookingFor" },
+    { title: "Remarks", dataIndex: "remarks", key: "remarks" },
   ];
   
 
@@ -103,16 +107,16 @@ function AdminPage() {
         ),
     },
     {
-      title: "Breed",
-      dataIndex: "breed",
-      key: "breed",
+      title: "Stock",
+      dataIndex: "stock",
+      key: "stock",
       render: (_, record) =>
         editingKey === record.id ? (
-          <Form.Item name="breed" rules={[{ required: true, message: "Enter breed" }]}>
-            <Input />
+          <Form.Item name="stock" rules={[{ required: true, message: "Enter no. of stock" }]}>
+            <InputNumber/>
           </Form.Item>
         ) : (
-          record.breed
+          record.stock
         ),
     },
     {
@@ -183,6 +187,9 @@ function AdminPage() {
           <Menu.Item key="2" icon={<PictureOutlined />}>Add Gallery</Menu.Item>
           <Menu.Item key="3" icon={<UserOutlined />}>Manage Users</Menu.Item>
           <Menu.Item key="4" icon={<PhoneOutlined />}>Enquiries</Menu.Item>
+          <Menu.Item key="logout" icon={<LoginOutlined />} onClick={()=> {navigate("/")}}>
+            Logout
+          </Menu.Item>
         </Menu>
       </Sider>
       <Layout>
@@ -195,11 +202,11 @@ function AdminPage() {
                 <Form.Item name="name" rules={[{ required: true, message: "Enter name" }]}>
                   <Input placeholder="Name" />
                 </Form.Item>
-                <Form.Item name="breed" rules={[{ required: true, message: "Enter breed" }]}>
-                  <Input placeholder="Breed" />
+                <Form.Item name="stock" rules={[{ required: true, message: "Enter no. stock" }]}>
+                  <InputNumber placeholder="no. of stock" />
                 </Form.Item>
                 <Form.Item name="amount" rules={[{ required: true, message: "Enter amount" }]}>
-                  <Input placeholder="Amount" type="number" />
+                  <InputNumber placeholder="Amount" />
                 </Form.Item>
                 <Form.Item name="imageUrl" rules={[{ required: true, message: "Enter image URL" }]}>
                   <Input placeholder="Image URL" />
