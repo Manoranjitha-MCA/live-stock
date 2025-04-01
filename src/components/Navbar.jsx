@@ -13,7 +13,7 @@ const Navbar = ({ setCurrentPage }) => {
         <img 
           src={logo}
           alt="Logo" 
-          className="w-10 h-10 object-cover rounded-full" 
+          className="w-10 h-10 object-cover " 
         />
         <h1 className="text-2xl font-bold">Muthulakshmi Integrated Cattle Farm</h1>
       </div>
@@ -33,7 +33,7 @@ const Navbar = ({ setCurrentPage }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        {['Home', 'Products','Gallery','Contact Us', 'Login'].map((item, index) => (
+        {['Home','About Us', 'Products','Gallery','Why Choose Us','Contact Us', 'Login'].map((item, index) => (
           <motion.a 
             key={index}
             href="#"
