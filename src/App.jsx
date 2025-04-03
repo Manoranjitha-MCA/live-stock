@@ -11,7 +11,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />       
         <Route path="/admin" element={<AdminPage />} />
-        <Route path="/user" element={<UserPage userPhone={"9884642773"}/>} />
+        <Route path="/user" element={<UserPage/>} />
       </Routes>
     </div>
   );

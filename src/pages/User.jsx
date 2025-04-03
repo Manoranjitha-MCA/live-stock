@@ -11,17 +11,19 @@ import {
   MinusCircleOutlined,
 } from "@ant-design/icons";
 import EnquiryForm from "../components/EnquiryForm";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 
 const { Sider, Content } = Layout;
 
-const UserPage = ({ userPhone }) => {
+const UserPage = () => {
   const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState("products");
   const navigate = useNavigate();
+  const locate = useLocation();
+  const userPhone = locate.state?.phone;
   useEffect(() => {
     // Fetch user details
     const userRef = ref(db, `users/${userPhone}`);
