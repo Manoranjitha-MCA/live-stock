@@ -36,7 +36,7 @@ const HomeComponent = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
-            At Muthulakshmi Integrated Livestock Farm, we are dedicated to sustainable and ethical farming, offering high-quality livestock and seafood. Our commitment to excellence ensures that you receive the best products, nurtured with care and precision.
+            At Muthulakshmi Integrated Livestock Farm, we are dedicated to sustainable and ethical farming, offering high-quality livestock and farm fish. Our commitment to excellence ensures that you receive the best products, nurtured with care and precision.
           </motion.p>
     
           {/* Specialties */}
@@ -69,7 +69,7 @@ const HomeComponent = () => {
           >
             <h2 className="text-2xl font-bold text-green-700 mb-4">Why Choose Us?</h2>
             <ul className="text-gray-700 space-y-2">
-              <li>✅ Premium Quality Livestock & Seafood</li>
+              <li>✅ Premium Quality Livestock & Farm fish</li>
               <li>✅ Sustainable & Ethical Farming Practices</li>
               <li>✅ Healthy & Well-Nurtured Breeds</li>
               <li>✅ Trusted by Farmers, Traders & Consumers</li>

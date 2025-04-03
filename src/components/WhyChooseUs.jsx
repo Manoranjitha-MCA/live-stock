@@ -24,7 +24,7 @@ export default function WhyChooseUs() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
       >
-        At <span className="font-semibold">Muthulakshmi Integrated Livestock Farm</span>, we are committed to excellence in livestock and seafood farming, ensuring the highest quality through ethical and sustainable practices.
+        At <span className="font-semibold">Muthulakshmi Integrated Livestock Farm</span>, we are committed to excellence in livestock and farmfish, ensuring the highest quality through ethical and sustainable practices.
       </motion.p>
 
       <motion.div 
@@ -44,13 +44,13 @@ export default function WhyChooseUs() {
             className="flex items-center space-x-3 p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md transition duration-300" 
             whileHover={{ scale: 1.05 }}
           >
-            ✅ <span className="text-lg">Uncompromised Quality – We prioritize high-quality breeding and farming practices to ensure the best livestock and seafood.</span>
+            ✅ <span className="text-lg">Uncompromised Quality – We prioritize high-quality breeding and farming practices to ensure the best livestock and farm fish.</span>
           </motion.li>
           <motion.li 
             className="flex items-center space-x-3 p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md transition duration-300" 
             whileHover={{ scale: 1.05 }}
           >
-            ✅ <span className="text-lg">Sustainable Farming – Our eco-friendly methods support long-term agricultural and aquaculture sustainability.</span>
+            ✅ <span className="text-lg">Sustainable Farming – Our eco-friendly methods support long-term agricultural, livestock and aquaculture sustainability.</span>
           </motion.li>
           <motion.li 
             className="flex items-center space-x-3 p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md transition duration-300" 

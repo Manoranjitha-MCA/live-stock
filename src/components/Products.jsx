@@ -1,41 +1,41 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import white_yorkshire from "../assets/images/white-yorkshire.jpg"; 
-import duroc from "../assets/images/duroc.jpg";
-import landrace from "../assets/images/landrace.jpg";
-import murrel_fish from "../assets/images/murrel fish.jpg";
-import pomfret_fish from "../assets/images/pomfret-fish.jpg";
+// import white_yorkshire from "https://ik.imagekit.io/p82gchbny/Large%20White%20Yorkshire?updatedAt=1743702022569sets/images/white-yorkshire.jpg"; 
+// import duroc from "https://ik.imagekit.io/p82gchbny/Duroc?updatedAt=1743702022516sets/images/duroc.jpg";
+// import landrace from "https://ik.imagekit.io/p82gchbny/Landrace?updatedAt=1743702022847ssets/images/landrace.jpg";
+// import murrel_fish from "https://ik.imagekit.io/p82gchbny/Murrel%20Fish?updatedAt=1743702022506s/murrel fish.jpg";
+// import pomfret_fish from "https://ik.imagekit.io/p82gchbny/Roopchand%20_%20Chinese%20Pomfret?updatedAt=1743702022438/images/pomfret-fish.jpg";
 
 const products = [
   {
     id: 1,
-    name: 'White Yorkshire',
-    description: 'Rich source of high-quality protein, essential for muscle growth and repair.',
-    image: white_yorkshire
+    name: 'Murrel (Snakehead Fish)',
+    description: 'A premium and highly sought-after freshwater fish known for its rich protein content, medicinal value, and delicious taste. Our Murrel fish are farmed using controlled environments to ensure the best quality and freshness.',
+    image: "https://ik.imagekit.io/p82gchbny/Murrel%20Fish?updatedAt=1743702022506s/murrel fish.jpg"
   },
   {
     id: 2,
-    name: 'Duroc',
-    description: 'Contains vital B vitamins such as B1, B6, and B12, supporting metabolism and nerve function.',
-    image: duroc
+    name: 'Roopchand / Chinese Pomfret ',
+    description: 'Roopchand / Chinses Pomfret is favourite among farm fish lovers with one single bone. Our farm produces high-quality Pomfret that is rich in Omega-3 fatty acids, promoting heart health and overall well-being.',
+    image: "https://ik.imagekit.io/p82gchbny/Roopchand%20_%20Chinese%20Pomfret?updatedAt=1743702022438/images/pomfret-fish.jpg"
   },
   {
     id: 3,
-    name: 'Landrace',
-    description: 'High-end breed known for red blood cell production and muscle health.',
-    image: landrace
+    name: 'White Yorkshire ',
+    description: 'One of the most widely raised pig breeds globally, White Yorkshire pigs are known for their lean meat, rapid growth, and adaptability. We ensure ethical breeding to maintain superior meat quality.',
+    image: "https://ik.imagekit.io/p82gchbny/Large%20White%20Yorkshire?updatedAt=1743702022569sets/images/white-yorkshire.jpg"
   },
   {
     id: 4,
-    name: 'Murrel Fish',
-    description: 'Packed with omega-3 and omega-6 fatty acids, supporting heart and brain health.',
-    image: murrel_fish
+    name: 'Duroc',
+    description: 'Recognized for its fast growth, excellent meat marbling, and disease resistance, Duroc pigs are an ideal choice for high-quality pork production. Our farm focuses on selective breeding to maintain the breed’s superior traits.',
+    image: "https://ik.imagekit.io/p82gchbny/Duroc?updatedAt=1743702022516sets/images/duroc.jpg"
   },
   {
     id: 5,
-    name: 'Pomfret Fish',
-    description: 'Offers exceptional health benefits with essential amino acids for tissue repair.',
-    image: pomfret_fish
+    name: 'Landrace',
+    description: 'A top-performing pig breed, Landrace pigs are valued for their exceptional mothering abilities and high litter sizes. They are an excellent choice for sustainable and profitable pork production.',
+    image: "https://ik.imagekit.io/p82gchbny/Landrace?updatedAt=1743702022847ssets/images/landrace.jpg"
   },
 ];
 

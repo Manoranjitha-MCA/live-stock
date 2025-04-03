@@ -24,7 +24,7 @@ export default function AboutUs() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
       >
-        Welcome to <span className="font-semibold">Muthulakshmi Integrated Livestock Farm</span>, where tradition meets innovation in sustainable farming. We take pride in producing high-quality livestock and seafood, ensuring freshness, nutrition, and ethical farming practices at every step. Our farm is committed to delivering excellence while maintaining harmony with nature.
+        Welcome to <span className="font-semibold">Muthulakshmi Integrated Livestock Farm</span>, where tradition meets innovation in sustainable farming. We take pride in producing high-quality livestock and farm fish, ensuring freshness, nutrition, and ethical farming practices at every step. Our farm is committed to deliver excellence while maintaining harmony with nature.
       </motion.p>
 
       {/* Who We Are Section */}
@@ -36,7 +36,7 @@ export default function AboutUs() {
       >
         <h2 className="text-2xl font-bold text-green-700 mb-4">Who We Are</h2>
         <p className="text-gray-700">
-          At <span className="font-semibold">Muthulakshmi Integrated Livestock Farm</span>, we are passionate about sustainable agriculture and aquaculture. Our mission is to provide premium-quality livestock and seafood while promoting eco-friendly and ethical farming practices. We believe that responsible farming not only benefits our customers but also supports a healthier environment.
+          At <span className="font-semibold">Muthulakshmi Integrated Livestock Farm</span>, we are passionate about sustainable agriculture, livestock and aquaculture. Our mission is to provide premium-quality livestock and farm fish while promoting eco-friendly and ethical farming practices. We believe that responsible farming not only benefits our customers but also supports a healthier environment.
         </p>
       </motion.div>
     </motion.div>
