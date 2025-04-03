@@ -75,39 +75,6 @@ const HomeComponent = () => {
               <li>✅ Trusted by Farmers, Traders & Consumers</li>
             </ul>
           </motion.div>
-  
-    
-          {/* Images Section */}
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl mt-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.5 }}
-          >
-            <div className="overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <img 
-                src={cattle_form}
-                alt="Cattle Farm" 
-                className="object-cover w-full h-48 hover:scale-105 transition-transform duration-300" 
-              />
-            </div>
-    
-            <div className="overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <img 
-                src={murrel_fish}
-                alt="Murrel Fish" 
-                className="object-cover w-full h-48 hover:scale-105 transition-transform duration-300" 
-              />
-            </div>
-    
-            <div className="overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <img 
-                src={pomfret_fish}
-                alt="Pomfret Fish" 
-                className="object-cover w-full h-48 hover:scale-105 transition-transform duration-300" 
-              />
-            </div>
-          </motion.div>
         </motion.div>
       );
 };

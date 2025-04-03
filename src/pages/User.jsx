@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Layout, Menu, Button, message } from "antd";
 import { db } from "../firebase";
-import { ref, onValue, push, get } from "firebase/database";
+import { ref, onValue, push, get, update } from "firebase/database";
 import {
   ShoppingOutlined,
   ShoppingCartOutlined,
@@ -68,42 +68,21 @@ const UserPage = ({ userPhone }) => {
     );
   };
 
-  const handlePayment = () => {
-    toast.success("Payment Successful!");
+  const purchaseProduct = () => {
+    cart.forEach(async (item) => {
+      const productRef = ref(db, `products/${item.id}`);
+      const snapshot = await get(productRef);
+      if (snapshot.exists()) {
+        const product = snapshot.val();
+        if (product.stock >= item.quantity) {
+          await update(productRef, { stock: product.stock - item.quantity });
+          toast.success(`Purchased ${item.name} successfully!`);
+        } else {
+          toast.error(`Not enough stock for ${item.name}`);
+        }
+      }
+    });
     setCart([]);
-    return;
-    const totalAmount = cart.reduce((acc, item) => acc + item.amount * item.quantity, 0);
-    const options = {
-      key: "YOUR_RAZORPAY_KEY",
-      amount: totalAmount * 100,
-      currency: "INR",
-      name: "Shop Name",
-      description: "Purchase",
-      handler: async (response) => {
-        const orderData = {
-          cart,
-          totalAmount,
-          paymentId: response.razorpay_payment_id,
-          userPhone,
-          userName: user.name,
-          createdAt: new Date().toISOString(),
-        };
-
-        // Store payment under the user's phone number
-        await push(ref(db, `payments/${userPhone}`), orderData);
-
-        message.success("Payment Successful! Receipt Generated.");
-        setCart([]);
-      },
-      prefill: {
-        name: user?.name || "User",
-        email: "user@example.com",
-        contact: userPhone,
-      },
-    };
-
-    const rzp = new window.Razorpay(options);
-    rzp.open();
   };
 
   return (
@@ -193,18 +172,13 @@ const UserPage = ({ userPhone }) => {
                       </div>
                     </div>
                   ))}
-                  <h3 className="text-lg font-semibold my-3">
-                    Total: ₹{cart.reduce((acc, item) => acc + item.amount * item.quantity, 0)}
-                  </h3>
-                  <Button type="primary" className="w-full" onClick={handlePayment}>
+                  <Button type="primary" className="w-full" onClick={purchaseProduct}>
                     Proceed to Payment
                   </Button>
                 </>
               )}
             </>
           )}
-
-          {/* Enquiry Form Section */}
           {selectedMenu === "enquiry" && <EnquiryForm userPhone={userPhone} />}
         </Content>
       </Layout>

@@ -30,7 +30,7 @@ export default function AuthPage() {
           const userData = snapshot.val();
           if (userData.password === password) {
             toast.success("Login successful!");
-            userData.phone === "9884642773" ? navigate("/admin") : navigate("/user");
+            userData.phone === "6383402240" ? navigate("/admin") : navigate("/user");
           } else {
             toast.error("Invalid phone number or password!");
           }

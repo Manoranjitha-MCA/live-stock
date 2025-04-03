@@ -30,6 +30,10 @@ export function Contact() {
               +91 98842 03988
             </a>
           </p>
+          <p className="text-lg mt-2">
+            Address:{" "}
+            Thalayanai Road, Ullar, Sivagiri, Tamil Nadu 627760
+          </p>
         </motion.div>
 
         {/* Google Maps Embed */}

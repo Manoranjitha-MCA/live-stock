@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MenuOutlined } from '@ant-design/icons';
-import logo from "../assets/images/logo.jpeg"
+import logo from "../assets/images/logo.png"
 const Navbar = ({ setCurrentPage }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -13,9 +13,8 @@ const Navbar = ({ setCurrentPage }) => {
         <img 
           src={logo}
           alt="Logo" 
-          className="w-10 h-10 object-cover " 
+          className="w-50 h-10 bg-gray-50 rounded-sm object-fill " 
         />
-        <h1 className="text-2xl font-bold">Muthulakshmi Integrated Cattle Farm</h1>
       </div>
 
       {/* Mobile Menu Icon */}
@@ -54,7 +53,7 @@ const Navbar = ({ setCurrentPage }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {['Home', 'Products','Gallery','Contact Us', 'Login'].map((item, index) => (
+          {['Home','About Us', 'Products','Gallery','Why Choose Us','Contact Us', 'Login'].map((item, index) => (
             <motion.a 
               key={index}
               href="#"
