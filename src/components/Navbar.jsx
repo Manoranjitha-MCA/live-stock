@@ -6,15 +6,23 @@ const Navbar = ({ setCurrentPage }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="w-full bg-gradient-to-r from-green-600 to-green-800 text-white shadow-md py-4 px-6 flex justify-between items-center relative">
+    <nav className="w-full bg-gradient-to-r bg-white text-green-700 shadow-md py-4 px-6 flex justify-between items-center relative">
       
       {/* Logo and Title */}
       <div className="flex items-center space-x-3">
         <img 
           src={logo}
           alt="Logo" 
-          className="w-50 h-10 bg-gray-50 rounded-sm object-fill " 
+          className="w-10 h-10 bg-gray-50 rounded-full object-fill " 
         />
+        <motion.h1 
+                    className="text-2xl font-extrabold text-green-700"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    Muthulakshmi Integrated Livestock Farm
+        </motion.h1>
       </div>
 
       {/* Mobile Menu Icon */}
@@ -37,7 +45,7 @@ const Navbar = ({ setCurrentPage }) => {
             key={index}
             href="#"
             onClick={() => setCurrentPage(index)}
-            className="text-white text-lg font-medium transition-all duration-300 ease-in-out hover:text-green-300 hover:bg-white hover:px-3 hover:py-2 rounded-lg"
+            className="text-green-700 text-lg font-medium transition-all duration-300 ease-in-out hover:text-white hover:bg-green-700 hover:px-3 hover:py-2 rounded-lg"
             whileHover={{ scale: 1.1 }}
           >
             {item}

@@ -1,8 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import murrel_fish from "../assets/images/murrel fish.jpg";
-import pomfret_fish from "../assets/images/pomfret-fish.jpg";
-import cattle_form from "../assets/images/cattle Image.jpg";
+import logo from "../assets/images/logo.png"
 const HomeComponent = () => {
   return (
         <motion.div 
@@ -11,15 +9,25 @@ const HomeComponent = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Hero Section */}
-          <motion.h1 
-            className="text-5xl font-extrabold mb-6 text-green-700"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            Welcome to Muthulakshmi Integrated Livestock Farm
-          </motion.h1>
+
+<div className="flex flex-col items-center justify-center mb-6">
+    <img 
+      src={logo} 
+      alt="Muthulakshmi Integrated Livestock Farm Logo" 
+      className="w-48 h-48 mb-8" 
+      style={{ maxWidth: '100%' }}
+    />
+    
+    {/* Hero Section */}
+    <motion.h1
+      className="text-4xl md:text-5xl font-extrabold text-green-700 text-center"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      Welcome to Muthulakshmi Integrated Livestock Farm
+    </motion.h1>
+  </div>
     
           <motion.p 
             className="text-lg mb-4 max-w-xl text-gray-600"

@@ -1,4 +1,4 @@
-import { Layout, Menu, Form, Input, Button, Table, Popconfirm, InputNumber, Select, Modal, Tabs, Tag, Image, Badge } from "antd";
+import { Layout, Menu, Form, Input, Button, Table, Popconfirm, InputNumber, Select, Modal, Tabs, Tag, Image, Badge, message, Card, Typography, Divider, Row, Col, Timeline, Avatar } from "antd";
 import { 
   AppstoreOutlined, 
   LoginOutlined, 
@@ -9,16 +9,21 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
-  CarOutlined
+  MessageOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SendOutlined
 } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { ref, push, onValue, remove, update, get } from "firebase/database";
 import { useNavigate } from "react-router-dom";
+import TextArea from "antd/lib/input/TextArea";
 
 const { Header, Content, Sider } = Layout;
 const { Option } = Select;
 const { TabPane } = Tabs;
+const { Title, Text } = Typography;
 
 function AdminPage() {
   const [products, setProducts] = useState([]);
@@ -28,14 +33,17 @@ function AdminPage() {
   const [editForm] = Form.useForm();
   const [productForm] = Form.useForm();
   const [galleryForm] = Form.useForm();
-  const [shippingForm] = Form.useForm();
+  const [userForm] = Form.useForm();
+  const [replyForm] = Form.useForm();
   const [editingKey, setEditingKey] = useState(null);
   const [selectedMenu, setSelectedMenu] = useState("1");
   const [enquiries, setEnquiries] = useState([]);
   const [orderDetailsVisible, setOrderDetailsVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [shippingModalVisible, setShippingModalVisible] = useState(false);
-  const [currentOrderId, setCurrentOrderId] = useState(null);
+  const [chatModalVisible, setChatModalVisible] = useState(false);
+  const [currentEnquiryId, setCurrentEnquiryId] = useState(null);
+  const [userModalVisible, setUserModalVisible] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -121,55 +129,78 @@ function AdminPage() {
       
       // Close modal if open
       setOrderDetailsVisible(false);
+      message.success(`Order status updated to ${status}`);
     } catch (error) {
       console.error("Error updating order status:", error);
+      message.error("Failed to update order status");
     }
   };
 
-  // Open shipping modal
-  const openShippingModal = (orderId) => {
-    setCurrentOrderId(orderId);
-    setShippingModalVisible(true);
-    shippingForm.resetFields();
+  // Open chat modal for enquiry
+  const openChatModal = (enquiryId) => {
+    setCurrentEnquiryId(enquiryId);
+    setChatModalVisible(true);
+    replyForm.resetFields();
   };
 
-  // Process shipping
-  const processShipping = async (values) => {
+  // Send reply to enquiry
+  const sendReply = async (values) => {
     try {
-      const order = orders.find(o => o.orderId === currentOrderId);
-      if (!order) return;
+      const enquiry = enquiries.find(e => e.id === currentEnquiryId);
+      if (!enquiry) return;
 
-      // Update order with tracking info and change status to shipped
-      await update(ref(db, `orders/${currentOrderId}`), {
-        status: 'shipped',
-        trackingInfo: {
-          id: values.trackingId,
-          carrier: values.carrier,
-          date: new Date().toISOString()
-        }
+      // Create a new message object
+      const newMessage = {
+        text: values.reply,
+        timestamp: new Date().toISOString(),
+        sender: 'admin',
+        senderName: 'Admin'
+      };
+
+      // Initialize messages array if it doesn't exist
+      const messages = enquiry.messages || [];
+      messages.push(newMessage);
+
+      // Update enquiry with new message and status
+      await update(ref(db, `enquiries/${currentEnquiryId}`), {
+        messages: messages,
+        status: 'replied',
+        lastReplyDate: new Date().toISOString(),
+        lastReplySender: 'admin'
       });
 
-      // Update in user's orders
-      if (order.userId) {
-        await update(ref(db, `users/${order.userId}/orders/${currentOrderId}`), {
-          status: 'shipped'
-        });
-      }
-
-      // Reduce stock for each item
-      for (const item of order.items) {
-        const productRef = ref(db, `products/${item.id}`);
-        const snapshot = await get(productRef);
-        if (snapshot.exists()) {
-          const product = snapshot.val();
-          const newStock = Math.max(0, product.stock - item.quantity);
-          await update(productRef, { stock: newStock });
-        }
-      }
-
-      setShippingModalVisible(false);
+      replyForm.resetFields();
+      message.success("Reply sent successfully");
     } catch (error) {
-      console.error("Error processing shipping:", error);
+      console.error("Error sending reply:", error);
+      message.error("Failed to send reply");
+    }
+  };
+
+  // Open user edit modal
+  const openUserModal = (user) => {
+    setCurrentUser(user);
+    userForm.setFieldsValue({
+      name: user.name,
+      phone: user.phone,
+      address: user.address || ''
+    });
+    setUserModalVisible(true);
+  };
+
+  // Update user information
+  const updateUser = async (values) => {
+    try {
+      if (!currentUser) return;
+
+      // Update user information
+      await update(ref(db, `users/${currentUser.id}`), values);
+      
+      setUserModalVisible(false);
+      message.success("User information updated successfully");
+    } catch (error) {
+      console.error("Error updating user:", error);
+      message.error("Failed to update user information");
     }
   };
 
@@ -177,9 +208,7 @@ function AdminPage() {
   const getStatusColor = (status) => {
     const statusColors = {
       pending: 'orange',
-      processing: 'blue',
-      shipped: 'cyan',
-      delivered: 'green',
+      verified: 'green',
       cancelled: 'red',
     };
     return statusColors[status] || 'default';
@@ -190,17 +219,22 @@ function AdminPage() {
     switch (status) {
       case 'pending':
         return <ClockCircleOutlined />;
-      case 'processing':
-        return <ClockCircleOutlined />;
-      case 'shipped':
-        return <CarOutlined />;
-      case 'delivered':
+      case 'verified':
         return <CheckCircleOutlined />;
       case 'cancelled':
         return <CloseCircleOutlined />;
       default:
         return null;
     }
+  };
+
+  // Get enquiry status
+  const getEnquiryStatus = (enquiry) => {
+    if (!enquiry.messages || enquiry.messages.length === 0) {
+      return 'new';
+    }
+    
+    return enquiry.lastReplySender === 'admin' ? 'replied' : 'new-reply';
   };
 
   const enquiryColumns = [
@@ -217,14 +251,77 @@ function AdminPage() {
       ),
     },
     { title: "Looking For", dataIndex: "lookingFor", key: "lookingFor" },
-    { title: "Remarks", dataIndex: "remarks", key: "remarks" },
+    { 
+      title: "Last Activity", 
+      key: "lastActivity",
+      render: (_, record) => {
+        if (!record.messages || record.messages.length === 0) {
+          return <span>{new Date(record.date).toLocaleDateString()}</span>;
+        }
+        
+        const lastMessage = record.messages[record.messages.length - 1];
+        return (
+          <span>
+            {new Date(lastMessage.timestamp).toLocaleDateString()} by {lastMessage.senderName}
+          </span>
+        );
+      },
+      sorter: (a, b) => {
+        const aDate = a.lastReplyDate || a.date;
+        const bDate = b.lastReplyDate || b.date;
+        return new Date(bDate) - new Date(aDate);
+      }
+    },
+    {
+      title: "Status",
+      key: "status",
+      render: (_, record) => {
+        const status = getEnquiryStatus(record);
+        let color, text;
+        
+        switch(status) {
+          case 'new':
+            color = 'orange';
+            text = 'New';
+            break;
+          case 'replied':
+            color = 'green';
+            text = 'Replied';
+            break;
+          case 'new-reply':
+            color = 'blue';
+            text = 'New Reply';
+            break;
+          default:
+            color = 'default';
+            text = 'Unknown';
+        }
+        
+        return <Tag color={color}>{text}</Tag>;
+      },
+      filters: [
+        { text: 'New', value: 'new' },
+        { text: 'Replied', value: 'replied' },
+        { text: 'New Reply', value: 'new-reply' },
+      ],
+      onFilter: (value, record) => getEnquiryStatus(record) === value,
+    },
     {
       title: "Actions",
       key: "actions",
       render: (_, record) => (
-        <Popconfirm title="Delete this enquiry?" onConfirm={() => deleteEnquiry(record.id)}>
-          <Button type="link" danger>Delete</Button>
-        </Popconfirm>
+        <>
+          <Button 
+            type="link" 
+            icon={<MessageOutlined />} 
+            onClick={() => openChatModal(record.id)}
+          >
+            Chat
+          </Button>
+          <Popconfirm title="Delete this enquiry?" onConfirm={() => deleteEnquiry(record.id)}>
+            <Button type="link" danger>Delete</Button>
+          </Popconfirm>
+        </>
       ),
     }
   ];
@@ -300,20 +397,6 @@ function AdminPage() {
     },
   ];
   
-  const userColumns = [
-    { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Contact", dataIndex: "phone", key: "phone" },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Popconfirm title="Are you sure?" onConfirm={() => deleteUser(record.id)}>
-          <Button type="link" danger>Delete</Button>
-        </Popconfirm>
-      ),
-    },
-  ];
-
   const orderColumns = [
     {
       title: "Order ID",
@@ -351,9 +434,7 @@ function AdminPage() {
       ),
       filters: [
         { text: 'Pending', value: 'pending' },
-        { text: 'Processing', value: 'processing' },
-        { text: 'Shipped', value: 'shipped' },
-        { text: 'Delivered', value: 'delivered' },
+        { text: 'Verified', value: 'verified' },
         { text: 'Cancelled', value: 'cancelled' },
       ],
       onFilter: (value, record) => record.status === value,
@@ -369,28 +450,12 @@ function AdminPage() {
           {record.status === 'pending' && (
             <Button 
               type="link" 
-              onClick={() => updateOrderStatus(record.orderId, 'processing')}
+              onClick={() => updateOrderStatus(record.orderId, 'verified')}
             >
-              Process
+              Verify
             </Button>
           )}
-          {record.status === 'processing' && (
-            <Button 
-              type="link" 
-              onClick={() => openShippingModal(record.orderId)}
-            >
-              Ship
-            </Button>
-          )}
-          {record.status === 'shipped' && (
-            <Button 
-              type="link" 
-              onClick={() => updateOrderStatus(record.orderId, 'delivered')}
-            >
-              Mark Delivered
-            </Button>
-          )}
-          {(record.status === 'pending' || record.status === 'processing') && (
+          {record.status === 'pending' && (
             <Popconfirm 
               title="Cancel this order?" 
               onConfirm={() => updateOrderStatus(record.orderId, 'cancelled')}
@@ -410,7 +475,14 @@ function AdminPage() {
           <Menu.Item key="1" icon={<AppstoreOutlined />}>Add Products</Menu.Item>
           <Menu.Item key="2" icon={<PictureOutlined />}>Add Gallery</Menu.Item>
           <Menu.Item key="3" icon={<UserOutlined />}>Manage Users</Menu.Item>
-          <Menu.Item key="4" icon={<PhoneOutlined />}>Enquiries</Menu.Item>
+          <Menu.Item key="4" icon={<PhoneOutlined />}>
+            Enquiries
+            <Badge 
+              count={enquiries.filter(e => !e.messages || e.lastReplySender !== 'admin').length} 
+              offset={[10, 0]}
+              style={{ backgroundColor: '#1890ff' }}
+            />
+          </Menu.Item>
           <Menu.Item key="5" icon={<ShoppingOutlined />}>
             Orders
             <Badge 
@@ -468,14 +540,112 @@ function AdminPage() {
           )}
           {selectedMenu === "3" && (
             <>
-              <h2>Manage Users</h2>
-              <Table dataSource={users} columns={userColumns} rowKey="id" />
+              <Title level={2}>Manage Users</Title>
+              <Divider />
+              <Row gutter={[16, 16]}>
+                {users.map(user => (
+                  <Col xs={24} sm={12} md={8} lg={6} key={user.id}>
+                    <Card 
+                      hoverable
+                      actions={[
+                        <EditOutlined key="edit" onClick={() => openUserModal(user)} />,
+                        <Popconfirm 
+                          title="Are you sure you want to delete this user?" 
+                          onConfirm={() => deleteUser(user.id)}
+                        >
+                          <DeleteOutlined key="delete" />
+                        </Popconfirm>
+                      ]}
+                    >
+                      <Card.Meta
+                        title={user.name}
+                        description={
+                          <div>
+                            <p><PhoneOutlined /> {user.phone}</p>
+                            {user.address && <p>{user.address}</p>}
+                            {user.orders && (
+                              <p>Orders: {Object.keys(user.orders).length}</p>
+                            )}
+                          </div>
+                        }
+                      />
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
             </>
           )}
           {selectedMenu === "4" && (
             <>
               <h2>Enquiries</h2>
-              <Table dataSource={enquiries} columns={enquiryColumns} rowKey="id" />
+              <Tabs defaultActiveKey="all">
+                <TabPane tab="All Enquiries" key="all">
+                  <Table 
+                    dataSource={enquiries} 
+                    columns={enquiryColumns} 
+                    rowKey="id"
+                    rowClassName={(record) => {
+                      const status = getEnquiryStatus(record);
+                      if (status === 'new-reply') return 'new-reply-row';
+                      if (status === 'replied') return 'replied-row';
+                      return '';
+                    }}
+                  />
+                </TabPane>
+                <TabPane 
+                  tab={
+                    <Badge 
+                      count={enquiries.filter(e => !e.messages || e.messages.length === 0).length} 
+                      style={{ backgroundColor: '#faad14' }}
+                    >
+                      <span>New</span>
+                    </Badge>
+                  } 
+                  key="new"
+                >
+                  <Table 
+                    dataSource={enquiries.filter(e => !e.messages || e.messages.length === 0)} 
+                    columns={enquiryColumns} 
+                    rowKey="id"
+                  />
+                </TabPane>
+                <TabPane 
+                  tab={
+                    <Badge 
+                      count={enquiries.filter(e => e.messages && e.messages.length > 0 && e.lastReplySender !== 'admin').length} 
+                      style={{ backgroundColor: '#1890ff' }}
+                    >
+                      <span>New Replies</span>
+                    </Badge>
+                  } 
+                  key="new-replies"
+                >
+                  <Table 
+                    dataSource={enquiries.filter(e => e.messages && e.messages.length > 0 && e.lastReplySender !== 'admin')} 
+                    columns={enquiryColumns} 
+                    rowKey="id"
+                    rowClassName="new-reply-row"
+                  />
+                </TabPane>
+                <TabPane 
+                  tab={
+                    <Badge 
+                      count={enquiries.filter(e => e.messages && e.messages.length > 0 && e.lastReplySender === 'admin').length} 
+                      style={{ backgroundColor: '#52c41a' }}
+                    >
+                      <span>Replied</span>
+                    </Badge>
+                  } 
+                  key="replied"
+                >
+                  <Table 
+                    dataSource={enquiries.filter(e => e.messages && e.messages.length > 0 && e.lastReplySender === 'admin')} 
+                    columns={enquiryColumns} 
+                    rowKey="id"
+                    rowClassName="replied-row"
+                  />
+                </TabPane>
+              </Tabs>
             </>
           )}
           {selectedMenu === "5" && (
@@ -511,52 +681,16 @@ function AdminPage() {
                 <TabPane 
                   tab={
                     <Badge 
-                      count={orders.filter(o => o.status === 'processing').length} 
-                      style={{ backgroundColor: '#1890ff' }}
-                    >
-                      <span>Processing</span>
-                    </Badge>
-                  } 
-                  key="processing"
-                >
-                  <Table 
-                    dataSource={orders.filter(o => o.status === 'processing')} 
-                    columns={orderColumns} 
-                    rowKey="orderId"
-                    pagination={{ pageSize: 10 }}
-                  />
-                </TabPane>
-                <TabPane 
-                  tab={
-                    <Badge 
-                      count={orders.filter(o => o.status === 'shipped').length} 
-                      style={{ backgroundColor: '#13c2c2' }}
-                    >
-                      <span>Shipped</span>
-                    </Badge>
-                  } 
-                  key="shipped"
-                >
-                  <Table 
-                    dataSource={orders.filter(o => o.status === 'shipped')} 
-                    columns={orderColumns} 
-                    rowKey="orderId"
-                    pagination={{ pageSize: 10 }}
-                  />
-                </TabPane>
-                <TabPane 
-                  tab={
-                    <Badge 
-                      count={orders.filter(o => o.status === 'delivered').length} 
+                      count={orders.filter(o => o.status === 'verified').length} 
                       style={{ backgroundColor: '#52c41a' }}
                     >
-                      <span>Delivered</span>
+                      <span>Verified</span>
                     </Badge>
                   } 
-                  key="delivered"
+                  key="verified"
                 >
                   <Table 
-                    dataSource={orders.filter(o => o.status === 'delivered')} 
+                    dataSource={orders.filter(o => o.status === 'verified')} 
                     columns={orderColumns} 
                     rowKey="orderId"
                     pagination={{ pageSize: 10 }}
@@ -617,9 +751,7 @@ function AdminPage() {
                   onChange={(value) => updateOrderStatus(selectedOrder.orderId, value)}
                 >
                   <Option value="pending">Pending</Option>
-                  <Option value="processing">Processing</Option>
-                  <Option value="shipped">Shipped</Option>
-                  <Option value="delivered">Delivered</Option>
+                  <Option value="verified">Verified</Option>
                   <Option value="cancelled">Cancelled</Option>
                 </Select>
               </div>
@@ -663,44 +795,16 @@ function AdminPage() {
               </div>
             </div>
             
-            {selectedOrder.trackingInfo && (
-              <div className="py-4">
-                <h4 className="font-medium mb-2">Shipping Information</h4>
-                <p>Tracking ID: {selectedOrder.trackingInfo.id}</p>
-                <p>Carrier: {selectedOrder.trackingInfo.carrier}</p>
-                <p>Shipped Date: {new Date(selectedOrder.trackingInfo.date).toLocaleDateString()}</p>
-              </div>
-            )}
-            
             <div className="flex justify-end space-x-2 mt-4">
               {selectedOrder.status === 'pending' && (
                 <Button 
                   type="primary" 
-                  onClick={() => updateOrderStatus(selectedOrder.orderId, 'processing')}
+                  onClick={() => updateOrderStatus(selectedOrder.orderId, 'verified')}
                 >
-                  Process Order
+                  Verify Order
                 </Button>
               )}
-              {selectedOrder.status === 'processing' && (
-                <Button 
-                  type="primary" 
-                  onClick={() => {
-                    setOrderDetailsVisible(false);
-                    openShippingModal(selectedOrder.orderId);
-                  }}
-                >
-                  Ship Order
-                </Button>
-              )}
-              {selectedOrder.status === 'shipped' && (
-                <Button 
-                  type="primary" 
-                  onClick={() => updateOrderStatus(selectedOrder.orderId, 'delivered')}
-                >
-                  Mark as Delivered
-                </Button>
-              )}
-              {(selectedOrder.status === 'pending' || selectedOrder.status === 'processing') && (
+              {selectedOrder.status === 'pending' && (
                 <Popconfirm 
                   title="Are you sure you want to cancel this order?" 
                   onConfirm={() => updateOrderStatus(selectedOrder.orderId, 'cancelled')}
@@ -709,58 +813,207 @@ function AdminPage() {
                 </Popconfirm>
               )}
             </div>
+            </div>
+        )}
+      </Modal>
+
+      {/* Chat Modal for Enquiries */}
+      <Modal
+        title="Enquiry Conversation"
+        open={chatModalVisible}
+        onCancel={() => setChatModalVisible(false)}
+        footer={null}
+        width={700}
+      >
+        {currentEnquiryId && (
+          <div>
+            {enquiries.find(e => e.id === currentEnquiryId) && (
+              <div>
+                <Card title="Enquiry Details" style={{ marginBottom: 16 }}>
+                  <p><strong>Name:</strong> {enquiries.find(e => e.id === currentEnquiryId).name}</p>
+                  <p><strong>Phone:</strong> {enquiries.find(e => e.id === currentEnquiryId).phone}</p>
+                  <p><strong>Location:</strong> {enquiries.find(e => e.id === currentEnquiryId).location}</p>
+                  <p><strong>Looking For:</strong> {enquiries.find(e => e.id === currentEnquiryId).lookingFor}</p>
+                  <p><strong>Remarks:</strong> {enquiries.find(e => e.id === currentEnquiryId).remarks}</p>
+                  <p><strong>Date:</strong> {new Date(enquiries.find(e => e.id === currentEnquiryId).date).toLocaleString()}</p>
+                </Card>
+                
+<div className="chat-container" style={{ 
+  maxHeight: '400px', 
+  overflowY: 'auto', 
+  padding: '16px', 
+  border: '1px solid #f0f0f0', 
+  borderRadius: '8px', 
+  marginBottom: '16px',
+  backgroundColor: '#f9f9f9'
+}}>
+  {(!enquiries.find(e => e.id === currentEnquiryId).messages || 
+    enquiries.find(e => e.id === currentEnquiryId).messages.length === 0) ? (
+    <div className="text-center my-8">
+      <div style={{ color: '#999', fontSize: '16px' }}>No messages yet</div>
+      <div style={{ color: '#bbb', fontSize: '14px', marginTop: '8px' }}>Start the conversation by sending a message below</div>
+    </div>
+  ) : (
+    <div>
+      {enquiries.find(e => e.id === currentEnquiryId).messages.map((message, index) => {
+        const isAdmin = message.sender === 'admin';
+        return (
+          <div key={index} style={{ 
+            marginBottom: '16px',
+            display: 'flex',
+            flexDirection: isAdmin ? 'row' : 'row-reverse',
+          }}>
+            <div style={{ 
+              marginRight: isAdmin ? '12px' : '0',
+              marginLeft: isAdmin ? '0' : '12px',
+            }}>
+              <Avatar 
+                style={{ 
+                  backgroundColor: isAdmin ? '#1890ff' : '#52c41a',
+                  color: '#fff',
+                }}
+              >
+                {isAdmin ? 'A' : 'U'}
+              </Avatar>
+            </div>
+            <div style={{ 
+              maxWidth: '70%',
+            }}>
+              <div style={{ 
+                backgroundColor: isAdmin ? '#e6f7ff' : '#f6ffed',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                position: 'relative',
+                border: isAdmin ? '1px solid #91caff' : '1px solid #b7eb8f',
+              }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '4px', color: isAdmin ? '#1890ff' : '#52c41a' }}>
+                  {message.senderName}
+                </div>
+                <div style={{ color: '#333' }}>{message.text}</div>
+                <div style={{ 
+                  fontSize: '11px', 
+                  color: '#999', 
+                  marginTop: '6px', 
+                  textAlign: 'right'
+                }}>
+                  {new Date(message.timestamp).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</div>
+
+                
+                <Form 
+                  form={replyForm} 
+                  onFinish={sendReply}
+                  layout="inline"
+                  style={{ display: 'flex', marginTop: '16px' }}
+                >
+                  <Form.Item 
+                    name="reply" 
+                    rules={[{ required: true, message: 'Please enter your reply' }]}
+                    style={{ flex: 1, marginRight: '8px', marginBottom: 0 }}
+                  >
+                    <Input.TextArea 
+                      placeholder="Type your reply here..." 
+                      autoSize={{ minRows: 1, maxRows: 3 }}
+                    />
+                  </Form.Item>
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Button 
+                      type="primary" 
+                      htmlType="submit"
+                      icon={<SendOutlined />}
+                    >
+                      Send
+                    </Button>
+                  </Form.Item>
+                </Form>
+              </div>
+            )}
           </div>
         )}
       </Modal>
 
-      {/* Shipping Modal */}
+      {/* Update User Modal */}
       <Modal
-        title="Ship Order"
-        open={shippingModalVisible}
-        onCancel={() => setShippingModalVisible(false)}
+        title="Update User Information"
+        open={userModalVisible}
+        onCancel={() => setUserModalVisible(false)}
         footer={null}
       >
         <Form 
-          form={shippingForm} 
+          form={userForm} 
           layout="vertical" 
-          onFinish={processShipping}
+          onFinish={updateUser}
         >
           <Form.Item
-            name="trackingId"
-            label="Tracking ID"
-            rules={[{ required: true, message: 'Please enter tracking ID' }]}
+            name="name"
+            label="Name"
+            rules={[{ required: true, message: 'Please enter name' }]}
           >
-            <Input placeholder="Enter tracking number" />
+            <Input placeholder="Enter name" />
           </Form.Item>
           <Form.Item
-            name="carrier"
-            label="Shipping Carrier"
-            rules={[{ required: true, message: 'Please select carrier' }]}
+            name="phone"
+            label="Phone"
+            rules={[{ required: true, message: 'Please enter phone number' }]}
           >
-            <Select placeholder="Select shipping carrier">
-              <Option value="DTDC">DTDC</Option>
-              <Option value="Delhivery">Delhivery</Option>
-              <Option value="BlueDart">BlueDart</Option>
-              <Option value="FedEx">FedEx</Option>
-              <Option value="IndiaPost">India Post</Option>
-              <Option value="Other">Other</Option>
-            </Select>
+            <Input placeholder="Enter phone number" />
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Address"
+          >
+            <TextArea rows={3} placeholder="Enter address (optional)" />
           </Form.Item>
           <Form.Item className="mb-0">
             <div className="flex justify-end space-x-2">
-              <Button onClick={() => setShippingModalVisible(false)}>
+              <Button onClick={() => setUserModalVisible(false)}>
                 Cancel
               </Button>
               <Button type="primary" htmlType="submit">
-                Ship Order
+                Update User
               </Button>
             </div>
           </Form.Item>
         </Form>
       </Modal>
+
+      <style jsx>{`
+        .replied-row {
+          background-color: #f6ffed;
+        }
+        .new-reply-row {
+          background-color: #e6f7ff;
+        }
+        .ant-card {
+          margin-bottom: 16px;
+        }
+        .ant-card-actions {
+          background: #f5f5f5;
+        }
+        .chat-container::-webkit-scrollbar {
+          width: 6px;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+          background-color: #d9d9d9;
+          border-radius: 3px;
+        }
+        .chat-container::-webkit-scrollbar-track {
+          background-color: #f5f5f5;
+        }
+      `}</style>
     </Layout>
   );
 }
 
 export default AdminPage;
+
 

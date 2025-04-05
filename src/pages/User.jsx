@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Menu, Button, message, Modal, Upload, Input, Table, Tag } from "antd";
+import { Layout, Menu, Button, message, Modal, Upload, Input,Form, Table, Tag, Timeline, Avatar, Card, Divider } from "antd";
 import { db } from "../firebase";
 import { ref, onValue, push, get, update, set } from "firebase/database";
 import {
@@ -12,11 +12,13 @@ import {
   UploadOutlined,
   LoadingOutlined,
   HistoryOutlined,
+  MessageOutlined,
+  SendOutlined,
 } from "@ant-design/icons";
-import EnquiryForm from "../components/EnquiryForm";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import QRCode from "qrcode";
+import TextArea from "antd/lib/input/TextArea";
 
 const { Sider, Content } = Layout;
 
@@ -36,6 +38,11 @@ const UserPage = () => {
   const [orders, setOrders] = useState([]);
   const [orderDetailsVisible, setOrderDetailsVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [enquiries, setEnquiries] = useState([]);
+  const [chatModalVisible, setChatModalVisible] = useState(false);
+  const [selectedEnquiry, setSelectedEnquiry] = useState(null);
+  const [replyForm] = Form.useForm();
+  const [enquiryForm] = Form.useForm();
   const navigate = useNavigate();
   const locate = useLocation();
   const userPhone = locate.state?.phone;
@@ -68,6 +75,18 @@ const UserPage = () => {
           ...data[key],
         }));
         setOrders(ordersList);
+      }
+    });
+
+    // Fetch user's enquiries
+    const enquiriesRef = ref(db, "enquiries");
+    onValue(enquiriesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const userEnquiries = Object.keys(data)
+          .map(key => ({ id: key, ...data[key] }))
+          .filter(enquiry => enquiry.phone === userPhone);
+        setEnquiries(userEnquiries);
       }
     });
   }, [userPhone]);
@@ -112,7 +131,7 @@ const UserPage = () => {
   const generatePaymentQRCode = async () => {
     try {
       // Replace with your actual UPI ID
-      const upiId = "your-upi-id@upi";
+      const upiId = "krishsachin87-1@okaxis";
       const paymentUrl = generateUPIUrl(
         upiId,
         "Store Payment",
@@ -173,7 +192,7 @@ const UserPage = () => {
       return null;
     }
   };
-  
+ 
   // Handle file before upload
   const beforeUpload = (file) => {
     const isImage = file.type.startsWith('image/');
@@ -322,12 +341,77 @@ const UserPage = () => {
   const getStatusColor = (status) => {
     const statusColors = {
       pending: 'orange',
-      processing: 'blue',
-      shipped: 'cyan',
-      delivered: 'green',
+      verified: 'green',
       cancelled: 'red',
     };
     return statusColors[status] || 'default';
+  };
+
+  // Submit new enquiry
+  const submitEnquiry = async (values) => {
+    try {
+      const enquiryData = {
+        name: user?.name || values.name,
+        phone: userPhone,
+        location: values.location,
+        lookingFor: values.lookingFor,
+        remarks: values.remarks,
+        date: new Date().toISOString(),
+      };
+      
+      await push(ref(db, "enquiries"), enquiryData);
+      enquiryForm.resetFields();
+      message.success("Enquiry submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting enquiry:", error);
+      message.error("Failed to submit enquiry");
+    }
+  };
+
+  // Open chat modal for an enquiry
+  const openChatModal = (enquiry) => {
+    setSelectedEnquiry(enquiry);
+    setChatModalVisible(true);
+  };
+
+  // Send reply to an enquiry
+  const sendReply = async (values) => {
+    try {
+      if (!selectedEnquiry) return;
+
+      // Create a new message object
+      const newMessage = {
+        text: values.reply,
+        timestamp: new Date().toISOString(),
+        sender: 'user',
+        senderName: user?.name || 'User'
+      };
+
+      // Initialize messages array if it doesn't exist
+      const messages = selectedEnquiry.messages || [];
+      messages.push(newMessage);
+
+      // Update enquiry with new message and status
+      await update(ref(db, `enquiries/${selectedEnquiry.id}`), {
+        messages: messages,
+        lastReplyDate: new Date().toISOString(),
+        lastReplySender: 'user'
+      });
+
+      // Update local state
+      setSelectedEnquiry({
+        ...selectedEnquiry,
+        messages: messages,
+        lastReplyDate: new Date().toISOString(),
+        lastReplySender: 'user'
+      });
+
+      replyForm.resetFields();
+      message.success("Reply sent successfully");
+    } catch (error) {
+      console.error("Error sending reply:", error);
+      message.error("Failed to send reply");
+    }
   };
 
   // Columns for orders table
@@ -356,318 +440,579 @@ const UserPage = () => {
       key: 'status',
       render: (status) => (
         <Tag color={getStatusColor(status)}>
-          {status.toUpperCase()}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Action',
-      key: 'action',
-      render: (_, record) => (
-        <Button type="link" onClick={() => viewOrderDetails(record.orderId)}>
-          View Details
-        </Button>
-      ),
-    },
-  ];
+        {status.toUpperCase()}
+      </Tag>
+    ),
+  },
+  {
+    title: 'Action',
+    key: 'action',
+    render: (_, record) => (
+      <Button type="link" onClick={() => viewOrderDetails(record.orderId)}>
+        View Details
+      </Button>
+    ),
+  },
+];
 
-  return (
-    <Layout style={{ minHeight: "100vh" }}>
-      {/* Sidebar */}
-      <Sider theme="dark" collapsible>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[selectedMenu]}
-          onClick={(e) => setSelectedMenu(e.key)}
-        >
-          <Menu.Item key="products" icon={<ShoppingOutlined />}>
-            Products
-          </Menu.Item>
-          <Menu.Item key="cart" icon={<ShoppingCartOutlined />}>
-            Cart ({cart.length})
-          </Menu.Item>
-          <Menu.Item key="orders" icon={<HistoryOutlined />}>
-            My Orders
-          </Menu.Item>
-          <Menu.Item key="enquiry" icon={<FormOutlined />}>
-            Enquiry
-          </Menu.Item>
-          <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={() => {navigate("/")}}>
-            Logout
-          </Menu.Item>
-        </Menu>
-      </Sider>
-      {/* Main Content */}
-      <Layout>
-        <Content className="p-5">
-          <h2 className="text-2xl font-semibold">Welcome, {user?.name} ({userPhone})</h2>
-          {/* Product Section - Styled as a Gallery */}
-          {selectedMenu === "products" && (
-            <>
-              <h2 className="text-xl font-semibold my-4">Products</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {products.map((product) => (
-                  <div key={product.id} className="bg-white shadow-md p-4 rounded-lg">
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-40 object-cover rounded-md"
-                    />
-                    <h3 className="text-lg font-medium mt-2">{product.name}</h3>
-                    <p className="text-gray-600">₹{product.amount}</p>
-                    <button
-                      className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md flex items-center justify-center"
-                      onClick={() => addToCart(product)}
-                    >
-                      <PlusCircleOutlined className="mr-2" /> Add to Cart
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-          {/* Cart Section */}
-          {selectedMenu === "cart" && (
-            <>
-              <h2 className="text-xl font-semibold my-4">Shopping Cart</h2>
-              {cart.length === 0 ? (
-                <p className="text-gray-500">Your cart is empty.</p>
-              ) : (
-                <>
-                  {cart.map((item) => (
-                    <div key={item.id} className="bg-white shadow-md p-4 mb-2 rounded-lg flex justify-between items-center">
-                      <div>
-                        <h3 className="text-lg font-medium">{item.name}</h3>
-                        <p className="text-gray-600">₹{item.amount} x {item.quantity}</p>
-                      </div>
-                      <div className="flex items-center">
-                        <button
-                          className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-md"
-                          onClick={() => decreaseQuantity(item.id)}
-                        >
-                          <MinusCircleOutlined />
-                        </button>
-                        <span className="px-3">{item.quantity}</span>
-                        <button
-                          className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded-md"
-                          onClick={() => increaseQuantity(item.id)}
-                        >
-                          <PlusCircleOutlined />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="bg-white shadow-md p-4 mb-4 rounded-lg">
-                    <h3 className="text-lg font-medium">Total Amount</h3>
-                    <p className="text-xl font-bold">₹{totalAmount}</p>
-                  </div>
-                  <Button type="primary" className="w-full" onClick={proceedToPayment}>
-                    Proceed to Payment
-                  </Button>
-                </>
-              )}
-            </>
-          )}
+// Columns for enquiries table
+const enquiryColumns = [
+  {
+    title: 'Date',
+    dataIndex: 'date',
+    key: 'date',
+    render: (text) => new Date(text).toLocaleDateString(),
+  },
+  {
+    title: 'Looking For',
+    dataIndex: 'lookingFor',
+    key: 'lookingFor',
+  },
+  {
+    title: 'Status',
+    key: 'status',
+    render: (_, record) => {
+      if (!record.messages || record.messages.length === 0) {
+        return <Tag color="orange">PENDING</Tag>;
+      } else if (record.lastReplySender === 'admin') {
+        return <Tag color="green">REPLIED</Tag>;
+      } else {
+        return <Tag color="blue">SENT</Tag>;
+      }
+    }
+  },
+  {
+    title: 'Action',
+    key: 'action',
+    render: (_, record) => (
+      <Button type="link" onClick={() => openChatModal(record)}>
+        <MessageOutlined /> View Conversation
+      </Button>
+    ),
+  },
+];
 
-          {/* Orders Section */}
-          {selectedMenu === "orders" && (
-            <>
-              <h2 className="text-xl font-semibold my-4">My Orders</h2>
-              {orders.length === 0 ? (
-                <div className="bg-white shadow-md p-8 rounded-lg text-center">
-                  <p className="text-gray-500 mb-4">You haven't placed any orders yet.</p>
-                  <Button 
-                    type="primary" 
-                    onClick={() => setSelectedMenu("products")}
-                  >
-                    Start Shopping
-                  </Button>
-                </div>
-              ) : (
-                <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                  <Table 
-                    columns={orderColumns} 
-                    dataSource={orders} 
-                    pagination={{ pageSize: 5 }}
-                    rowKey="orderId"
+return (
+  <Layout style={{ minHeight: "100vh" }}>
+    {/* Sidebar */}
+    <Sider theme="dark" collapsible>
+      <Menu
+        theme="dark"
+        mode="inline"
+        selectedKeys={[selectedMenu]}
+        onClick={(e) => setSelectedMenu(e.key)}
+      >
+        <Menu.Item key="products" icon={<ShoppingOutlined />}>
+          Products
+        </Menu.Item>
+        <Menu.Item key="cart" icon={<ShoppingCartOutlined />}>
+          Cart ({cart.length})
+        </Menu.Item>
+        <Menu.Item key="orders" icon={<HistoryOutlined />}>
+          My Orders
+        </Menu.Item>
+        <Menu.Item key="enquiry" icon={<FormOutlined />}>
+          Enquiries
+        </Menu.Item>
+        <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={() => {navigate("/")}}>
+          Logout
+        </Menu.Item>
+      </Menu>
+    </Sider>
+    {/* Main Content */}
+    <Layout>
+      <Content className="p-5">
+        <h2 className="text-2xl font-semibold">Welcome, {user?.name} ({userPhone})</h2>
+        {/* Product Section - Styled as a Gallery */}
+        {selectedMenu === "products" && (
+          <>
+            <h2 className="text-xl font-semibold my-4">Products</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {products.map((product) => (
+                <div key={product.id} className="bg-white shadow-md p-4 rounded-lg">
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="w-full h-40 object-cover rounded-md"
                   />
+                  <h3 className="text-lg font-medium mt-2">{product.name}</h3>
+                  <p className="text-gray-600">₹{product.amount}</p>
+                  <button
+                    className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md flex items-center justify-center"
+                    onClick={() => addToCart(product)}
+                  >
+                    <PlusCircleOutlined className="mr-2" /> Add to Cart
+                  </button>
                 </div>
-              )}
-            </>
-          )}
-
-          {selectedMenu === "enquiry" && <EnquiryForm userPhone={userPhone} />}
-        </Content>
-      </Layout>
-      
-      {/* QR Code Modal */}
-      <Modal
-        title="Scan QR Code to Pay"
-        open={showQrModal}
-        onCancel={() => setShowQrModal(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setShowQrModal(false)}>
-            Cancel
-          </Button>,
-          <Button key="complete" type="primary" onClick={handlePaymentComplete}>
-            I've Completed Payment
-          </Button>
-        ]}
-        centered
-      >
-        <div className="flex flex-col items-center">
-          {qrCodeURL ? (
-            <>
-              <img src={qrCodeURL} alt="Payment QR Code" className="w-64 h-64 mb-4" />
-              <p className="text-center mb-2">Total Amount: ₹{totalAmount}</p>
-              <p className="text-center text-sm text-gray-500">
-                Scan this QR code with any UPI app to make payment
-              </p>
-            </>
-          ) : (
-            <p>Generating QR code...</p>
-          )}
-        </div>
-      </Modal>
-      
-      {/* Payment Proof Upload Modal */}
-      <Modal
-        title="Upload Payment Proof"
-        open={showUploadModal}
-        onCancel={() => setShowUploadModal(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setShowUploadModal(false)}>
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            loading={uploadLoading}
-            onClick={saveOrder}
-            disabled={!paymentProof || !transactionId}
-          >
-            Submit Order
-          </Button>
-        ]}
-        centered
-      >
-        <div className="flex flex-col space-y-4 py-4">
-          <div>
-            <p className="mb-2 font-medium">Transaction ID</p>
-            <Input
-              placeholder="Enter UPI transaction ID"
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <p className="mb-2 font-medium">Payment Screenshot</p>
-            <Upload
-              name="file"
-              listType="picture-card"
-              fileList={fileList}
-              beforeUpload={beforeUpload}
-              onChange={handleFileChange}
-              customRequest={customRequest}
-              maxCount={1}
-            >
-              {fileList.length >= 1 ? null : (
-                <div>
-                  {uploadLoading ? <LoadingOutlined /> : <UploadOutlined />}
-                  <div style={{ marginTop: 8 }}>Upload</div>
-                </div>
-              )}
-            </Upload>
-            {paymentProof && (
-              <div className="mt-2 text-sm text-green-600">
-                Payment proof uploaded successfully!
-              </div>
-            )}
-          </div>
-          
-          <div className="text-sm text-gray-500">
-            <p>Please upload a screenshot of your payment confirmation and provide the transaction ID for verification.</p>
-          </div>
-        </div>
-      </Modal>
-      
-      {/* Order Details Modal */}
-      <Modal
-        title="Order Details"
-        open={orderDetailsVisible}
-        onCancel={() => setOrderDetailsVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setOrderDetailsVisible(false)}>
-            Close
-          </Button>
-        ]}
-        width={700}
-      >
-        {selectedOrder && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-lg font-medium">Order #{selectedOrder.orderId.substring(6, 14)}</h3>
-                <p className="text-gray-500">
-                  Placed on {new Date(selectedOrder.orderDate).toLocaleString()}
-                </p>
-              </div>
-              <Tag color={getStatusColor(selectedOrder.status)}>
-                {selectedOrder.status.toUpperCase()}
-              </Tag>
+              ))}
             </div>
-            
-            <div className="border-t border-b py-4">
-              <h4 className="font-medium mb-2">Items</h4>
-              <div className="space-y-2">
-                {selectedOrder.items.map((item, index) => (
-                  <div key={index} className="flex justify-between">
+          </>
+        )}
+        {/* Cart Section */}
+        {selectedMenu === "cart" && (
+          <>
+            <h2 className="text-xl font-semibold my-4">Shopping Cart</h2>
+            {cart.length === 0 ? (
+              <p className="text-gray-500">Your cart is empty.</p>
+            ) : (
+              <>
+                {cart.map((item) => (
+                  <div key={item.id} className="bg-white shadow-md p-4 mb-2 rounded-lg flex justify-between items-center">
                     <div>
-                      <span className="font-medium">{item.name}</span>
-                      <span className="text-gray-500 ml-2">x{item.quantity}</span>
+                      <h3 className="text-lg font-medium">{item.name}</h3>
+                      <p className="text-gray-600">₹{item.amount} x {item.quantity}</p>
                     </div>
-                    <span>₹{item.subtotal}</span>
+                    <div className="flex items-center">
+                      <button
+                        className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-md"
+                        onClick={() => decreaseQuantity(item.id)}
+                      >
+                        <MinusCircleOutlined />
+                      </button>
+                      <span className="px-3">{item.quantity}</span>
+                      <button
+                        className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded-md"
+                        onClick={() => increaseQuantity(item.id)}
+                      >
+                        <PlusCircleOutlined />
+                      </button>
+                    </div>
                   </div>
                 ))}
+                <div className="bg-white shadow-md p-4 mb-4 rounded-lg">
+                  <h3 className="text-lg font-medium">Total Amount</h3>
+                  <p className="text-xl font-bold">₹{totalAmount}</p>
+                </div>
+                <Button type="primary" className="w-full" onClick={proceedToPayment}>
+                  Proceed to Payment
+                </Button>
+              </>
+            )}
+          </>
+        )}
+        {/* Orders Section */}
+        {selectedMenu === "orders" && (
+          <>
+            <h2 className="text-xl font-semibold my-4">My Orders</h2>
+            {orders.length === 0 ? (
+              <div className="bg-white shadow-md p-8 rounded-lg text-center">
+                <p className="text-gray-500 mb-4">You haven't placed any orders yet.</p>
+                <Button
+                  type="primary"
+                  onClick={() => setSelectedMenu("products")}
+                >
+                  Start Shopping
+                </Button>
               </div>
-            </div>
-            
-            <div className="flex justify-between font-medium">
-              <span>Total Amount</span>
-              <span>₹{selectedOrder.totalAmount}</span>
-            </div>
-            
-            <div>
-              <h4 className="font-medium mb-2">Payment Information</h4>
-              <p>Transaction ID: {selectedOrder.transactionId}</p>
-              <div className="mt-2">
-                <p className="mb-1">Payment Proof:</p>
-                <img 
-                  src={selectedOrder.paymentProof} 
-                  alt="Payment Proof" 
-                  className="max-w-full h-auto max-h-60 rounded-md"
+            ) : (
+              <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                <Table
+                  columns={orderColumns}
+                  dataSource={orders}
+                  pagination={{ pageSize: 5 }}
+                  rowKey="orderId"
                 />
               </div>
+            )}
+          </>
+        )}
+        {/* Enquiries Section */}
+        {selectedMenu === "enquiry" && (
+          <>
+            <h2 className="text-xl font-semibold my-4">My Enquiries</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                {enquiries.length === 0 ? (
+                  <div className="bg-white shadow-md p-8 rounded-lg text-center">
+                    <p className="text-gray-500 mb-4">You haven't submitted any enquiries yet.</p>
+                  </div>
+                ) : (
+                  <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                    <Table
+                      columns={enquiryColumns}
+                      dataSource={enquiries}
+                      pagination={{ pageSize: 5 }}
+                      rowKey="id"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="bg-white shadow-md p-4 rounded-lg">
+                <h3 className="text-lg font-medium mb-4">Submit New Enquiry</h3>
+                <Form
+                  form={enquiryForm}
+                  layout="vertical"
+                  onFinish={submitEnquiry}
+                >
+                  <Form.Item
+                    name="location"
+                    label="Location"
+                    rules={[{ required: true, message: 'Please enter your location' }]}
+                  >
+                    <Input placeholder="Enter your location" />
+                  </Form.Item>
+                  <Form.Item
+                    name="lookingFor"
+                    label="What are you looking for?"
+                    rules={[{ required: true, message: 'Please describe what you are looking for' }]}
+                  >
+                    <Input placeholder="E.g., Specific product, service, etc." />
+                  </Form.Item>
+                  <Form.Item
+                    name="remarks"
+                    label="Additional Remarks"
+                  >
+                    <TextArea
+                      rows={4}
+                      placeholder="Any additional information you'd like to provide"
+                    />
+                  </Form.Item>
+                  <Form.Item>
+                    <Button type="primary" htmlType="submit" block>
+                      Submit Enquiry
+                    </Button>
+                  </Form.Item>
+                </Form>
+              </div>
             </div>
+          </>
+        )}
+      </Content>
+    </Layout>
+    
+    {/* QR Code Modal */}
+    <Modal
+      title="Scan QR Code to Pay"
+      open={showQrModal}
+      onCancel={() => setShowQrModal(false)}
+      footer={[
+        <Button key="cancel" onClick={() => setShowQrModal(false)}>
+          Cancel
+        </Button>,
+        <Button key="complete" type="primary" onClick={handlePaymentComplete}>
+          I've Completed Payment
+        </Button>
+      ]}
+      centered
+    >
+      <div className="flex flex-col items-center">
+        {qrCodeURL ? (
+          <>
+            <img src={qrCodeURL} alt="Payment QR Code" className="w-64 h-64 mb-4" />
+            <p className="text-center mb-2">Total Amount: ₹{totalAmount}</p>
+            <p className="text-center text-sm text-gray-500">
+              Scan this QR code with any UPI app to make payment
+            </p>
+          </>
+        ) : (
+          <p>Generating QR code...</p>
+        )}
+      </div>
+    </Modal>
+    
+    {/* Payment Proof Upload Modal */}
+    <Modal
+      title="Upload Payment Proof"
+      open={showUploadModal}
+      onCancel={() => setShowUploadModal(false)}
+      footer={[
+        <Button key="cancel" onClick={() => setShowUploadModal(false)}>
+          Cancel
+        </Button>,
+        <Button
+          key="submit"
+          type="primary"
+          loading={uploadLoading}
+          onClick={saveOrder}
+          disabled={!paymentProof || !transactionId}
+        >
+          Submit Order
+        </Button>
+      ]}
+      centered
+    >
+      <div className="flex flex-col space-y-4 py-4">
+        <div>
+          <p className="mb-2 font-medium">Transaction ID</p>
+          <Input
+            placeholder="Enter UPI transaction ID"
+            value={transactionId}
+            onChange={(e) => setTransactionId(e.target.value)}
+          />
+        </div>
+        
+        <div>
+          <p className="mb-2 font-medium">Payment Screenshot</p>
+          <Upload
+            name="file"
+            listType="picture-card"
+            fileList={fileList}
+            beforeUpload={beforeUpload}
+            onChange={handleFileChange}
+            customRequest={customRequest}
+            maxCount={1}
+          >
+            {fileList.length >= 1 ? null : (
+              <div>
+                {uploadLoading ? <LoadingOutlined /> : <UploadOutlined />}
+                <div style={{ marginTop: 8 }}>Upload</div>
+              </div>
+            )}
+          </Upload>
+          {paymentProof && (
+            <div className="mt-2 text-sm text-green-600">
+              Payment proof uploaded successfully!
+            </div>
+          )}
+        </div>
+        
+        <div className="text-sm text-gray-500">
+          <p>Please upload a screenshot of your payment confirmation and provide the transaction ID for verification.</p>
+        </div>
+      </div>
+    </Modal>
+    
+    {/* Order Details Modal */}
+    <Modal
+      title="Order Details"
+      open={orderDetailsVisible}
+      onCancel={() => setOrderDetailsVisible(false)}
+      footer={[
+        <Button key="close" onClick={() => setOrderDetailsVisible(false)}>
+          Close
+        </Button>
+      ]}
+      width={700}
+    >
+      {selectedOrder && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-medium">Order #{selectedOrder.orderId.substring(6, 14)}</h3>
+              <p className="text-gray-500">
+                Placed on {new Date(selectedOrder.orderDate).toLocaleString()}
+              </p>
+            </div>
+            <Tag color={getStatusColor(selectedOrder.status)}>
+              {selectedOrder.status.toUpperCase()}
+            </Tag>
+          </div>
+          
+          <div className="border-t border-b py-4">
+            <h4 className="font-medium mb-2">Items</h4>
+            <div className="space-y-2">
+              {selectedOrder.items.map((item, index) => (
+                <div key={index} className="flex justify-between">
+                  <div>
+                    <span className="font-medium">{item.name}</span>
+                    <span className="text-gray-500 ml-2">x{item.quantity}</span>
+                  </div>
+                  <span>₹{item.subtotal}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex justify-between font-medium">
+            <span>Total Amount</span>
+            <span>₹{selectedOrder.totalAmount}</span>
+          </div>
+          
+          <div>
+            <h4 className="font-medium mb-2">Payment Information</h4>
+            <p>Transaction ID: {selectedOrder.transactionId}</p>
+            <div className="mt-2">
+              <p className="mb-1">Payment Proof:</p>
+              <img
+                src={selectedOrder.paymentProof}
+                alt="Payment Proof"
+                className="max-w-full h-auto max-h-60 rounded-md"
+              />
+            </div>
+          </div>
+          
+          {selectedOrder.status === 'verified' && (
+            <div className="bg-green-50 p-4 rounded-md border border-green-200">
+              <h4 className="font-medium text-green-700 mb-2">Payment Verified</h4>
+              <p className="text-green-600">
+                Your payment has been verified. Thank you for your purchase!
+              </p>
+            </div>
+          )}
+          
+          {selectedOrder.status === 'cancelled' && (
+              <div className="bg-red-50 p-4 rounded-md border border-red-200">
+                <h4 className="font-medium text-red-700 mb-2">Order Cancelled</h4>
+                <p className="text-red-600">
+                  This order has been cancelled. Please contact support if you have any questions.
+                </p>
+              </div>
+            )}
             
             {selectedOrder.status === 'shipped' && selectedOrder.trackingInfo && (
-              <div>
-                <h4 className="font-medium mb-2">Tracking Information</h4>
+              <div className="mt-4 bg-blue-50 p-4 rounded-md border border-blue-200">
+                <h4 className="font-medium text-blue-700 mb-2">Tracking Information</h4>
                 <p>Tracking ID: {selectedOrder.trackingInfo.id}</p>
                 <p>Carrier: {selectedOrder.trackingInfo.carrier}</p>
                 <p>Shipped Date: {new Date(selectedOrder.trackingInfo.date).toLocaleDateString()}</p>
+              </div>
+            )}
+            
+            {selectedOrder.status === 'delivered' && (
+              <div className="bg-green-50 p-4 rounded-md border border-green-200">
+                <h4 className="font-medium text-green-700 mb-2">Order Delivered</h4>
+                <p className="text-green-600">
+                  Your order has been delivered. Thank you for shopping with us!
+                </p>
               </div>
             )}
           </div>
         )}
       </Modal>
       
+      {/* Chat Modal for Enquiries */}
+      <Modal
+        title="Enquiry Conversation"
+        open={chatModalVisible}
+        onCancel={() => setChatModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setChatModalVisible(false)}>
+            Close
+          </Button>
+        ]}
+        width={700}
+      >
+        {selectedEnquiry && (
+          <div>
+            <Card title="Enquiry Details" style={{ marginBottom: 16 }}>
+              <p><strong>Looking For:</strong> {selectedEnquiry.lookingFor}</p>
+              <p><strong>Location:</strong> {selectedEnquiry.location}</p>
+              <p><strong>Remarks:</strong> {selectedEnquiry.remarks}</p>
+              <p><strong>Date:</strong> {new Date(selectedEnquiry.date).toLocaleString()}</p>
+            </Card>
+            
+            <Divider orientation="left">Conversation</Divider>
+            
+            
+
+<div className="chat-container" style={{ 
+  maxHeight: '400px', 
+  overflowY: 'auto', 
+  padding: '16px', 
+  border: '1px solid #f0f0f0', 
+  borderRadius: '8px', 
+  marginBottom: '16px',
+  backgroundColor: '#f9f9f9'
+}}>
+  {(!selectedEnquiry.messages || selectedEnquiry.messages.length === 0) ? (
+    <div className="text-center my-8">
+      <div style={{ color: '#999', fontSize: '16px' }}>No messages yet</div>
+      <div style={{ color: '#bbb', fontSize: '14px', marginTop: '8px' }}>Start the conversation by sending a message below</div>
+    </div>
+  ) : (
+    <div>
+      {selectedEnquiry.messages.map((message, index) => {
+        const isAdmin = message.sender === 'admin';
+        return (
+          <div key={index} style={{ 
+            marginBottom: '16px',
+            display: 'flex',
+            flexDirection: isAdmin ? 'row' : 'row-reverse',
+          }}>
+            <div style={{ 
+              marginRight: isAdmin ? '12px' : '0',
+              marginLeft: isAdmin ? '0' : '12px',
+            }}>
+              <Avatar 
+                style={{ 
+                  backgroundColor: isAdmin ? '#1890ff' : '#52c41a',
+                  color: '#fff',
+                }}
+              >
+                {isAdmin ? 'A' : 'U'}
+              </Avatar>
+            </div>
+            <div style={{ 
+              maxWidth: '70%',
+            }}>
+              <div style={{ 
+                backgroundColor: isAdmin ? '#e6f7ff' : '#f6ffed',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                position: 'relative',
+                border: isAdmin ? '1px solid #91caff' : '1px solid #b7eb8f',
+              }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '4px', color: isAdmin ? '#1890ff' : '#52c41a' }}>
+                  {message.senderName}
+                </div>
+                <div style={{ color: '#333' }}>{message.text}</div>
+                <div style={{ 
+                  fontSize: '11px', 
+                  color: '#999', 
+                  marginTop: '6px', 
+                  textAlign: 'right'
+                }}>
+                  {new Date(message.timestamp).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</div>
+
+            
+            <Form 
+              form={replyForm} 
+              onFinish={sendReply}
+              layout="inline"
+              style={{ display: 'flex', marginTop: '16px' }}
+            >
+              <Form.Item 
+                name="reply" 
+                rules={[{ required: true, message: 'Please enter your message' }]}
+                style={{ flex: 1, marginRight: '8px', marginBottom: 0 }}
+              >
+                <TextArea 
+                  placeholder="Type your message here..." 
+                  autoSize={{ minRows: 1, maxRows: 3 }}
+                />
+              </Form.Item>
+              <Form.Item style={{ marginBottom: 0 }}>
+                <Button 
+                  type="primary" 
+                  htmlType="submit"
+                  icon={<SendOutlined />}
+                >
+                  Send
+                </Button>
+              </Form.Item>
+            </Form>
+          </div>
+        )}
+      </Modal>
+      
       <ToastContainer />
+      
+      <style jsx>{`
+        .chat-container::-webkit-scrollbar {
+          width: 6px;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+          background-color: #d9d9d9;
+          border-radius: 3px;
+        }
+        .chat-container::-webkit-scrollbar-track {
+          background-color: #f5f5f5;
+        }
+      `}</style>
     </Layout>
   );
 };
 
 export default UserPage;
+
 
