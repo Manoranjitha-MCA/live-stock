@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import logo from "../assets/images/logo.png"
+import logo from "../assets/logo.jpg";
 const HomeComponent = () => {
   return (
         <motion.div 
@@ -14,7 +14,7 @@ const HomeComponent = () => {
     <img 
       src={logo} 
       alt="Muthulakshmi Integrated Livestock Farm Logo" 
-      className="w-48 h-48 mb-8" 
+      className="w-96 h-auto" 
       style={{ maxWidth: '100%' }}
     />
     

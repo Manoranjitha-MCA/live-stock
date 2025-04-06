@@ -46,7 +46,7 @@ export function Contact() {
           <iframe
             title="Google Maps Location"
             className="w-full h-64 rounded-lg"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3916.488448946476!2d77.694528974644!3d11.004556854107137!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8585284bb60ff%3A0x8dfe5f5b3c6e7bfb!2sCoimbatore%2C%20Tamil%20Nadu%2C%20India!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3291.3750011104726!2d77.39178100000001!3d9.302596299999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b0693ae30a22671%3A0xe3d91cc357865c5e!2sKani%20Lemon%20Farm%20Products!5e1!3m2!1sen!2sin!4v1743910420247!5m2!1sen!2sin"
             allowFullScreen=""
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
